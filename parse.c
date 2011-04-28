@@ -62,7 +62,6 @@ int verify_checksums(uint16_t *data)
 	csum2=checksum(data8+16,12);
 	csum3=checksum(even+1,14);
 	csum4=checksum(odd+1,14);
-	printf("%04hx %04hx %04hx %04hx\n", csum1, csum2, csum3, csum4); 
 	res = 0;
 	res ^= (csum1 ^ data[1]);
 	res ^= (csum2 ^ data[14]);
@@ -114,7 +113,7 @@ int main(int argc, char *argv[])
 	fseek(raw, offset, SEEK_SET);
 	fread(data, sizeof(int16_t), 16, raw);
 
-	printf("Tag version (?) : %d\n", data[7]);
+	printf("Tag flag : %d\n", data[7]);
 	if(mod) {
 		printf("Modifiying entry %d to %04hx\n", index, val);
 		data[index] = val;
@@ -125,11 +124,12 @@ int main(int argc, char *argv[])
 
 	fclose(raw);
 
+	printf("Tag data :\n");
 	for (i=0; i<16; i++) {
 		printf("%04hx ", data[i]);
 	}
 	printf("\n");
-	printf("r : %04hx %04hx %04hx %04hx %04hx %04hx\n", data[2], data[3], data[6], data[9], data[10], data[13]);
+	/*printf("r : %04hx %04hx %04hx %04hx %04hx %04hx\n", data[2], data[3], data[6], data[9], data[10], data[13]);*/
 
 	if (verify_checksums((uint16_t *)data))
 		printf("Checksum NOK\n");
