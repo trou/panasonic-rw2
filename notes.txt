@@ -30,8 +30,12 @@ Word 7 is a flag : 0 means the distortion correction data shouldn't be applied
 
 The rest seems to represent 2 types of data, but only one seems used,
 consisting of words 12, 5, 8, 4 and 11.
-word 12 seems to be always be equal to 2500, changing it seems to influentiate colors but disables distortion correction
-words 5, 8, 4 and 11 are floating point numbers encoded as signed integers. Divide them by 32768 to get the original value.
+	- word 12 seems to be always be equal to 2500, changing it disables
+	  distortion correction
+	- words 5, 8, 4 and 11 are floating point numbers encoded as signed
+	  integers. Divide them by 32768 to get the original value.
+
+Changing words 2, 3, 6, 9, 10 and 13 doesn't seem to have any effect.
 
 Word 5 is a scale factor.
 Word 8 is the primary (a) coefficient for the distortion correction
