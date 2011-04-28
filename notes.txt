@@ -1,2 +1,84 @@
-Modifications :
-Field 7 is a flag : 0 : do not, 1 apply
+Panasonic includes lens distortion correction data in their RAW files as an EXIF tag.
+Unfortunately, they did not release the specification for this tag. Which is really
+annoying for people willing to use a RAW converter which is not vetted by Panasonic.
+
+Inspired by this blog post :
+http://thinkfat.blogspot.com/2009/02/dissecting-panasonic-rw2-files.html
+
+I decided to take the plunge and finally find out what's behind the format.
+
+The following command allows us to get the raw hex bytes of the 0x119 tag, which includes the correction data :
+
+$ exiv2 pr -ph -u sample.rw2 | grep -A2 0x0119
+0x0119 PanasonicRaw 0x0119                      Undefined  32  32
+  0000  29 54 9b 48 fc 00 00 00 69 01 00 00 e0 01 01 00  )T.H....i.......
+  0010  7f 0f 34 01 56 02 81 fb c4 09 28 03 ce 5a d6 8e  ..4.V.....(..Z..
+
+The data is only 32 bytes long, which should make it quite easy to parse.
+
+After some (err a lot of) reverse engineering work, I finally understand enough
+:
+the data is infact 16 short (16 bits) integers, represented in little endian order :
+5429 489b 00fc 0000 0169 0000 01e0 0001 0f7f 0134 0256 fb81 09c4 0328 5ace 8ed6 
+ 0    1    2    3    4    5    6    7    8    9    10   11   12   13   14   15
+
+Words 0, 1, 14 and 15 are checksums, computed and verified as described at the end.
+
+Word 7 is a flag : 0 means the distortion correction data shouldn't be applied
+		   1 means it should
+		   other values seem to be invalid
+
+The rest seems to represent 2 types of data, but only one seems used,
+consisting of words 12, 5, 8, 4 and 11.
+word 12 seems to be always be equal to 2500, changing it seems to influentiate colors but disables distortion correction
+words 5, 8, 4 and 11 are floating point numbers encoded as signed integers. Divide them by 32768 to get the original value.
+
+Word 5 is a scale factor.
+Word 8 is the primary (a) coefficient for the distortion correction
+Word 4 is the second (b) coefficient for the distortion correction
+Word 11 is the third (c) coefficient for the distortion correction
+
+This can be resumed by : 
+n = data[12];
+scale = 1.0/(1.0+(data[5]/32768.0));
+a = scale*(data[8]/32768.0);
+b = scale*(data[4]/32768.0);
+c = scale*(data[11]/32768.0);
+
+And the checksum code :
+
+uint16_t checksum(uint8_t *data, int len)
+{
+	int i;
+	int csum=0;
+
+	for (i=0; i<len; i++) {
+		csum = (73*csum + data[i])%0xFFEF;
+	}
+	return csum;
+}
+
+void checksums(uint16_t *data)
+{
+	int i;
+	uint8_t *data8 = (uint8_t *)data;
+	uint8_t even[16], odd[16]; 
+	uint16_t csum1, csum2, csum3, csum4;
+
+	csum1=checksum(data8+4,12);
+	csum2=checksum(data8+16,12);
+
+	data[1] = csum1;
+	data[14] = csum2;
+	for (i=0; i<16; i++) {
+		even[i] = data8[i*2];
+		odd[i] = data8[i*2+1];
+	}
+
+	csum3=checksum(even+1,14);
+	csum4=checksum(odd+1,14);
+	
+	data[0] = csum3;
+	data[15] = csum4;
+	return;
+}
