@@ -3,11 +3,9 @@
 #include <stdint.h>
 
 struct dist {
-	int16_t num1;
-	int16_t num2;
-	int16_t num3;
-	int16_t num4;
-	int16_t num5;
+	double scale;
+	double a, b, c;
+	double n;
 };
 
 uint16_t checksum(uint8_t *data, int len)
@@ -48,14 +46,13 @@ int main(int argc, char *argv[])
 {
 	FILE *raw;
 	int offset;
-	uint16_t data[16]; 
-	uint8_t *data8 = (uint8_t *)data;
+	int16_t data[16]; 
+/*	uint8_t *data8 = (uint8_t *)data;*/
 	int i;
 	struct dist d;
-	double t1, t2, t3, t4;
 
 	if (argc < 3) {
-		printf("Usage : %s file offset", argv[0]);
+		printf("Usage : %s file offset\n", argv[0]);
 		return 1;
 	}
 	offset = strtoul(argv[2], NULL, 0);
@@ -71,27 +68,23 @@ int main(int argc, char *argv[])
 	fread(data, sizeof(uint16_t), 16, raw);
 	fclose(raw);
 
-	for (i=0; i<32; i++) {
-		printf("%02x ", data8[i]);
+	for (i=0; i<16; i++) {
+		printf("%04x ", data[i]);
 	}
 	printf("\n");
+	printf("r : %04x %04x %04x %04x %04x %04x %04x\n", data[2], data[3], data[6], data[7], data[9], data[10], data[13]);
 
-	if (verify_checksums(data))
+	if (verify_checksums((uint16_t *)data))
 		printf("Checksum NOK\n");
 	else
 		printf("Checksum OK\n");
 
 	
-	d.num1 = data[12];
-	d.num2 = data[5];
-	d.num3 = data[8];
-	d.num4 = data[4];
-	d.num5 = data[11];
-	printf("%d %d %d %d %d\n", d.num1, d.num2, d.num3, d.num4, d.num5);
-	t1 = 1.0/(d.num2/32768.0+1.0);
-	t2 = t1*d.num3/32768.0;
-	t3 = d.num4/32768.0*t1;
-	t4 = d.num5/32768.0*t1;
-	printf("%f %f %f %f\n", t1, t2, t3, t4);
+	d.n = data[12];
+	d.scale = 1.0/(1.0+(data[5]/32768.0));
+	d.a = d.scale*(data[8]/32768.0);
+	d.b = d.scale*(data[4]/32768.0);
+	d.c = d.scale*(data[11]/32768.0);
+	printf("%f %f %f %f %f\n", d.n, d.scale, d.a, d.b, d.c);
 	return 0;
 }
