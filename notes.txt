@@ -42,12 +42,21 @@ Word 8 is the primary (a) coefficient for the distortion correction
 Word 4 is the second (b) coefficient for the distortion correction
 Word 11 is the third (c) coefficient for the distortion correction
 
+
 This can be resumed by : 
 n = data[12];
 scale = 1.0/(1.0+(data[5]/32768.0));
 a = scale*(data[8]/32768.0);
 b = scale*(data[4]/32768.0);
 c = scale*(data[11]/32768.0);
+
+Now after playing with Adobe DNG Converter, parameters a b and c seem to roughly match 
+the following equation :
+
+Ru = Rd + a*Rd^3 + b*Rd^5 + c*Rd^7
+
+While i'm not 100% sure for c, the actual values are so low that any error is
+probably negligible.
 
 And the checksum code :
 
