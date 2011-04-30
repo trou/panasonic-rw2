@@ -89,6 +89,14 @@ int verify_checksums(uint16_t *data)
 	return res;
 }
 
+void usage(char *argv0) {
+	fprintf(stderr, "Usage : %s [-m VAL -i INDEX] [-r \"a b c\"] [-o OFFSET] file\n", argv0);
+	fprintf(stderr, "\t\t -m VAL -i INDEX : replaces word at INDEX with value VAL\n");
+	fprintf(stderr, "\t\t -r \"a b c \" : replaces distortion info with a b c (floats)\n");
+	fprintf(stderr, "\t\t -o OFFSET : specify the offset of the 0x0119 tag\n");
+	exit(EXIT_FAILURE);
+}
+
 int main(int argc, char *argv[])
 {
 	FILE *raw;
@@ -120,13 +128,12 @@ int main(int argc, char *argv[])
 				index = atoi(optarg);
 				break;
 			default: /* '?' */
-				fprintf(stderr, "Usage : %s file offset\n", argv[0]);
-				exit(EXIT_FAILURE);
+				usage(argv[0]);
 		}
 	}
 
 	if (argc-optind < 1) {
-		fprintf(stderr, "Usage : %s file offset\n", argv[0]);
+		usage(argv[0]);
 		return 1;
 	}
 

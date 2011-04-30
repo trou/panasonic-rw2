@@ -1,4 +1,5 @@
-CC=gcc -W -Wall -Werror -std=c90
+CC=gcc
+COPTS=-W -Wall -Werror -std=c90 -O2
 all:
 	$(CC) -o parse parse.c
 	$(CC) -o dng parsedng.c
