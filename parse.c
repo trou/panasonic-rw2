@@ -73,16 +73,27 @@ int verify_checksums(uint16_t *data)
 int main(int argc, char *argv[])
 {
 	FILE *raw;
-	int offset;
+	int offset = 0x340;
 	int16_t data[16]; 
 /*	uint8_t *data8 = (uint8_t *)data;*/
 	int i;
 	struct dist d;
-	int opt, mod = 0, index = 0;
+	int opt, mod = 0, index = 0, replace = 0;
 	int16_t val;
+	float a, b, c;
 
-	while ((opt = getopt(argc, argv, "m:i:")) != -1) {
+	while ((opt = getopt(argc, argv, "r:o:m:i:")) != -1) {
 		switch (opt) {
+			case 'r':
+				replace = 1;
+				if (sscanf(optarg, "%f %f %f", &a, &b, &c) != 3) {
+					fprintf(stderr, "Failed to parse new data\n");
+					exit(EXIT_FAILURE);
+				}
+				break;
+			case 'o':
+				offset = strtoul(optarg, NULL, 0); 
+				break;
 			case 'm':
 				mod = 1;
 				val = strtoul(optarg, NULL, 0); 
@@ -96,12 +107,11 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (argc-optind <= 1) {
+	if (argc-optind < 1) {
 		fprintf(stderr, "Usage : %s file offset\n", argv[0]);
 		return 1;
 	}
 
-	offset = strtoul(argv[optind+1], NULL, 0);
 	raw = fopen(argv[optind], "rb+");
 
 	if(!raw) {
@@ -113,10 +123,24 @@ int main(int argc, char *argv[])
 	fseek(raw, offset, SEEK_SET);
 	fread(data, sizeof(int16_t), 16, raw);
 
+	if (verify_checksums((uint16_t *)data)) {
+		printf("Checksum NOK, exiting\n");
+		exit(EXIT_FAILURE);
+	}
+
 	printf("Tag flag : %d\n", data[7]);
 	if(mod) {
 		printf("Modifiying entry %d to %04hx\n", index, val);
 		data[index] = val;
+		fix_checksums((uint16_t *)data);
+		fseek(raw, offset, SEEK_SET);
+		fwrite(data, sizeof(int16_t), 16, raw);
+	}
+	if (replace) {
+		printf("Replacing data with %f %f %f\n", a, b, c);
+		data[8] = a*32767;
+		data[4] = b*32767;
+		data[11] = c*32767;
 		fix_checksums((uint16_t *)data);
 		fseek(raw, offset, SEEK_SET);
 		fwrite(data, sizeof(int16_t), 16, raw);
