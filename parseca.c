@@ -44,24 +44,24 @@ void fix_checksums(uint16_t *data)
 {
 	int i;
 	uint8_t *data8 = (uint8_t *)data;
-	uint8_t even[16], odd[16]; 
+	uint8_t even[32], odd[32]; 
 	uint16_t csum1, csum2, csum3, csum4;
 
-	csum1=checksum(data8+4,12);
-	csum2=checksum(data8+16,12);
+	csum1=checksum(data8+4,28);
+	csum2=checksum(data8+32,28);
 
 	data[1] = csum1;
-	data[14] = csum2;
-	for (i=0; i<16; i++) {
+	data[30] = csum2;
+	for (i=0; i<32; i++) {
 		even[i] = data8[i*2];
 		odd[i] = data8[i*2+1];
 	}
 
-	csum3=checksum(even+1,14);
-	csum4=checksum(odd+1,14);
+	csum3=checksum(even+1,30);
+	csum4=checksum(odd+1,30);
 	
 	data[0] = csum3;
-	data[15] = csum4;
+	data[31] = csum4;
 	return;
 }
 
@@ -69,23 +69,23 @@ int verify_checksums(uint16_t *data)
 {
 	int i;
 	uint8_t *data8 = (uint8_t *)data;
-	uint8_t even[16], odd[16]; 
+	uint8_t even[32], odd[32]; 
 	uint16_t csum1, csum2, csum3, csum4;
 	int res;
 
-	for (i=0; i<16; i++) {
+	for (i=0; i<32; i++) {
 		even[i] = data8[i*2];
 		odd[i] = data8[i*2+1];
 	}
-	csum1=checksum(data8+4,12);
-	csum2=checksum(data8+16,12);
-	csum3=checksum(even+1,14);
-	csum4=checksum(odd+1,14);
+	csum1=checksum(data8+4,28);
+	csum2=checksum(data8+32,28);
+	csum3=checksum(even+1,30);
+	csum4=checksum(odd+1,30);
 	res = 0;
 	res ^= (csum1 ^ data[1]);
-	res ^= (csum2 ^ data[14]);
+	res ^= (csum2 ^ data[30]);
 	res ^= (csum3 ^ data[0]);
-	res ^= (csum4 ^ data[15]);
+	res ^= (csum4 ^ data[31]);
 	return res;
 }
 
@@ -100,8 +100,8 @@ void usage(char *argv0) {
 int main(int argc, char *argv[])
 {
 	FILE *raw;
-	int offset = 0x340;
-	int16_t data[16]; 
+	int offset = 0x360;
+	int16_t data[32]; 
 	int i;
 	struct dist d;
 	int opt, mod = 0, index = 0, replace = 0;
@@ -146,14 +146,14 @@ int main(int argc, char *argv[])
 	printf("Opened %s at offset %x\n", argv[optind], offset);
 
 	fseek(raw, offset, SEEK_SET);
-	fread(data, sizeof(int16_t), 16, raw);
+	fread(data, sizeof(int16_t), 32, raw);
 
 	if (verify_checksums((uint16_t *)data)) {
 		printf("Checksum NOK, exiting\n");
 		exit(EXIT_FAILURE);
 	}
 
-	printf("Tag flag : %d\n", data[7]);
+	printf("Tag flag : %d\n", data[29]);
 	if(mod) {
 		printf("Modifiying entry %d to %04hx\n", index, val);
 		data[index] = val;
@@ -178,7 +178,7 @@ int main(int argc, char *argv[])
 		printf("%04hx ", data[i]);
 	}
 	printf("\n");
-	printf("r : %04hx %04hx %04hx %04hx %04hx %04hx\n", data[2], data[3], data[6], data[9], data[10], data[13]);
+	/*printf("r : %04hx %04hx %04hx %04hx %04hx %04hx\n", data[2], data[3], data[6], data[9], data[10], data[13]);*/
 
 	if (verify_checksums((uint16_t *)data))
 		printf("Checksum NOK\n");
@@ -186,12 +186,24 @@ int main(int argc, char *argv[])
 		printf("Checksum OK\n");
 
 	
-	d.n = data[12];
-	d.scale = 1.0/(1.0+(data[5]/32768.0));
+	printf("%d\n", data[0x16/2]);
+	d.n=data[0x16/2];
+	printf("%f\n", data[0x22/2]/d.n);
+	printf("%f\n", data[0x20/2]/d.n);
+	printf("%f\n", data[0x8/2]/d.n);
+	printf("%f\n", data[0x18/2]/d.n);
+	printf("%f\n", data[0x2e/2]/d.n);
+	printf("%f\n", data[0x10/2]/d.n);
+	printf("%f\n", data[0x34/2]/d.n);
+	printf("%f\n", data[0x36/2]/d.n);
+	printf("%f\n", data[0x14/2]/d.n);
+	printf("%f\n", data[0x28/2]/d.n);
+	printf("%f\n", data[0x3a/2]/d.n);
+	d.n = data[0x22];
+	d.scale = 1.0/(1.0+(data[0x22]/32768.0));
 	d.a = d.scale*(data[8]/32768.0);
 	d.b = d.scale*(data[4]/32768.0);
 	d.c = d.scale*(data[11]/32768.0);
 	printf("%f %f %f %f %f\n", d.n, d.scale, d.a, d.b, d.c);
-	printf("%f %f %f %f %f\n", data[2]/32768.0, data[3]/32768.0, data[6]/32768.0, data[9]/32768.0, data[13]/32768.0);
 	return 0;
 }
