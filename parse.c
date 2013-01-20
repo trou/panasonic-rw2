@@ -202,7 +202,7 @@ int main(int argc, char *argv[])
 	d.a = d.scale*(data[8]/32768.0);
 	d.b = d.scale*(data[4]/32768.0);
 	d.c = d.scale*(data[11]/32768.0);
-	printf("%f %f %f %f %f\n", d.n, d.scale, d.a, d.b, d.c);
+	printf("%.3f %.3f %.3f %.3f %.3f\n", d.n, d.scale, d.a, d.b, d.c);
 /*	printf("%f %f %f %f %f\n", data[2]/32768.0, data[3]/32768.0, data[6]/32768.0, data[9]/32768.0, data[13]/32768.0);*/
 	return 0;
 }
