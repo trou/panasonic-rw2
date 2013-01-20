@@ -1,4 +1,5 @@
 Panasonic RW2 files lens distortion correction information parser
+More info : http://syscall.eu/#pana
 
 Content :
 	- parse.c : parses and modify tag 0x0119
