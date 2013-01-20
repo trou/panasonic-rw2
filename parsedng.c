@@ -81,10 +81,10 @@ int main(int argc, char *argv[])
 	for(i=0; i<20; i++) {
 		swap8(warp+i*8);
 	}
-	printf("r : %f %f %f %f %f %f\n", data[0], data[1], data[2], data[3], data[4], data[5]);
+	printf("r : %.3f %.3f %.3f %.3f %.3f %.3f\n", data[0], data[1], data[2], data[3], data[4], data[5]);
 	data+=6;
-	printf("g : %f %f %f %f %f %f\n", data[0], data[1], data[2], data[3], data[4], data[5]);
+	printf("g : %.3f %.3f %.3f %.3f %.3f %.3f\n", data[0], data[1], data[2], data[3], data[4], data[5]);
 	data+=6;
-	printf("b : %f %f %f %f %f %f\n", data[0], data[1], data[2], data[3], data[4], data[5]);
+	printf("b : %.3f %.3f %.3f %.3f %.3f %.3f\n", data[0], data[1], data[2], data[3], data[4], data[5]);
 	return 0;	
 }

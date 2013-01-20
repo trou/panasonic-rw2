@@ -107,8 +107,9 @@ int main(int argc, char *argv[])
 	int opt, mod = 0, index = 0, replace = 0;
 	int16_t val;
 	float a, b, c;
+	char verbose = 0;
 
-	while ((opt = getopt(argc, argv, "r:o:m:i:")) != -1) {
+	while ((opt = getopt(argc, argv, "r:o:m:i:v")) != -1) {
 		switch (opt) {
 			case 'r':
 				replace = 1;
@@ -123,6 +124,9 @@ int main(int argc, char *argv[])
 			case 'm':
 				mod = 1;
 				val = strtoul(optarg, NULL, 0); 
+				break;
+			case 'v':
+				verbose = 1;
 				break;
 			case 'i':
 				index = atoi(optarg);
@@ -143,7 +147,9 @@ int main(int argc, char *argv[])
 		printf("Can't open %s\n", argv[1]);
 		return 1;
 	}
-	printf("Opened %s at offset %x\n", argv[optind], offset);
+	if (verbose) {
+		printf("Opened %s at offset %x\n", argv[optind], offset);
+	}
 
 	fseek(raw, offset, SEEK_SET);
 	fread(data, sizeof(int16_t), 16, raw);
@@ -153,7 +159,9 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	printf("Tag flag : %d\n", data[7]);
+	if (verbose) {
+		printf("Tag flag : %d\n", data[7]);
+	}
 	if(mod) {
 		printf("Modifiying entry %d to %04hx\n", index, val);
 		data[index] = val;
@@ -173,17 +181,20 @@ int main(int argc, char *argv[])
 
 	fclose(raw);
 
-	printf("Tag data :\n");
-	for (i=0; i<16; i++) {
-		printf("%04hx ", data[i]);
+	if (verbose) {
+		printf("Tag data :\n");
+		for (i=0; i<16; i++) {
+			printf("%04hx ", data[i]);
+		}
+		printf("\n");
+		printf("r : %04hx %04hx %04hx %04hx %04hx %04hx\n", data[2], data[3], data[6], data[9], data[10], data[13]);
 	}
-	printf("\n");
-	printf("r : %04hx %04hx %04hx %04hx %04hx %04hx\n", data[2], data[3], data[6], data[9], data[10], data[13]);
 
 	if (verify_checksums((uint16_t *)data))
 		printf("Checksum NOK\n");
-	else
+	else if (verbose) {
 		printf("Checksum OK\n");
+	}
 
 	
 	d.n = data[12];
@@ -192,6 +203,6 @@ int main(int argc, char *argv[])
 	d.b = d.scale*(data[4]/32768.0);
 	d.c = d.scale*(data[11]/32768.0);
 	printf("%f %f %f %f %f\n", d.n, d.scale, d.a, d.b, d.c);
-	printf("%f %f %f %f %f\n", data[2]/32768.0, data[3]/32768.0, data[6]/32768.0, data[9]/32768.0, data[13]/32768.0);
+/*	printf("%f %f %f %f %f\n", data[2]/32768.0, data[3]/32768.0, data[6]/32768.0, data[9]/32768.0, data[13]/32768.0);*/
 	return 0;
 }
